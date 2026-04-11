@@ -1,0 +1,162 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Base Reset ─────────────────────────────────────────── */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-ink-950 text-ink-200 font-body;
+    background-image: 
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(251,191,36,0.06) 0%, transparent 60%),
+      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.015'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  ::selection {
+    @apply bg-amber-400 text-ink-950;
+  }
+}
+
+/* ─── Shimmer Skeleton ───────────────────────────────────── */
+@layer components {
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      rgba(255,255,255,0.04) 25%,
+      rgba(255,255,255,0.08) 50%,
+      rgba(255,255,255,0.04) 75%
+    );
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  /* ─── Scrollbar ──────────────────────────────────────────── */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-ink-950;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-ink-700 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-ink-600;
+  }
+
+  /* ─── Markdown Prose Overrides ───────────────────────────── */
+  .research-prose h1 {
+    @apply font-display text-3xl font-bold text-ink-50 mb-4 mt-8 leading-tight;
+  }
+  .research-prose h2 {
+    @apply font-display text-2xl font-semibold text-ink-100 mb-3 mt-7 pb-2 border-b border-ink-800 leading-snug;
+  }
+  .research-prose h3 {
+    @apply font-display text-xl font-semibold text-ink-200 mb-2 mt-5;
+  }
+  .research-prose h4 {
+    @apply font-body text-base font-semibold text-ink-300 uppercase tracking-widest mb-2 mt-4;
+  }
+  .research-prose p {
+    @apply text-ink-300 leading-relaxed mb-4 text-[15px];
+  }
+  .research-prose ul {
+    @apply list-none pl-0 mb-4 space-y-2;
+  }
+  .research-prose ul li {
+    @apply text-ink-300 text-[15px] leading-relaxed pl-5 relative;
+  }
+  .research-prose ul li::before {
+    content: '—';
+    @apply absolute left-0 text-amber-500 font-mono;
+  }
+  .research-prose ol {
+    @apply list-decimal pl-5 mb-4 space-y-2;
+  }
+  .research-prose ol li {
+    @apply text-ink-300 text-[15px] leading-relaxed pl-1;
+  }
+  .research-prose ol li::marker {
+    @apply text-amber-500 font-mono font-medium;
+  }
+  .research-prose blockquote {
+    @apply border-l-2 border-amber-500 pl-4 italic text-ink-400 my-4;
+  }
+  .research-prose code {
+    @apply font-mono text-amber-400 bg-ink-900 px-1.5 py-0.5 rounded text-sm;
+  }
+  .research-prose pre {
+    @apply bg-ink-900 border border-ink-800 rounded-lg p-4 overflow-x-auto mb-4;
+  }
+  .research-prose pre code {
+    @apply bg-transparent px-0 py-0 text-ink-300;
+  }
+  .research-prose strong {
+    @apply font-semibold text-ink-100;
+  }
+  .research-prose em {
+    @apply italic text-ink-300;
+  }
+  .research-prose hr {
+    @apply border-ink-800 my-6;
+  }
+  .research-prose a {
+    @apply text-amber-400 underline underline-offset-2 hover:text-amber-300 transition-colors;
+  }
+  .research-prose table {
+    @apply w-full border-collapse mb-6 text-sm;
+  }
+  .research-prose thead tr {
+    @apply border-b border-ink-700;
+  }
+  .research-prose th {
+    @apply text-left text-ink-400 font-medium font-mono uppercase tracking-wider text-xs py-2 pr-4;
+  }
+  .research-prose td {
+    @apply text-ink-300 py-2 pr-4 border-b border-ink-900;
+  }
+
+  /* ─── Animated Gradient Button ───────────────────────────── */
+  .btn-primary {
+    @apply relative overflow-hidden font-body font-semibold text-ink-950 rounded-lg px-6 py-3 transition-all duration-300;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
+    background-size: 200% 200%;
+    animation: gradientShift 4s ease infinite;
+  }
+  .btn-primary:hover:not(:disabled) {
+    @apply scale-[1.02] shadow-lg shadow-amber-500/20;
+  }
+  .btn-primary:disabled {
+    @apply opacity-50 cursor-not-allowed scale-100;
+  }
+
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* ─── Glow border focus ───────────────────────────────────── */
+  .input-glow:focus {
+    outline: none;
+    box-shadow: 0 0 0 1px rgba(251,191,36,0.4), 0 0 20px rgba(251,191,36,0.08);
+  }
+
+  /* ─── Fade-up animation utility ─────────────────────────── */
+  .animate-fade-up {
+    animation: fadeUp 0.6s ease forwards;
+  }
+  .animate-fade-up-delay-1 { animation-delay: 0.1s; opacity: 0; animation-fill-mode: forwards; animation-name: fadeUp; animation-duration: 0.6s; animation-timing-function: ease; }
+  .animate-fade-up-delay-2 { animation-delay: 0.2s; opacity: 0; animation-fill-mode: forwards; animation-name: fadeUp; animation-duration: 0.6s; animation-timing-function: ease; }
+  .animate-fade-up-delay-3 { animation-delay: 0.3s; opacity: 0; animation-fill-mode: forwards; animation-name: fadeUp; animation-duration: 0.6s; animation-timing-function: ease; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+}
