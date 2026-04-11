@@ -79,9 +79,18 @@ The `content` field must be a Markdown-formatted string.
 
 ## 🌐 Deployment (GitHub Pages)
 
-1. Set `base: './'` in `vite.config.js` (already configured)
-2. Build: `npm run build`
-3. Deploy the `dist/` folder to GitHub Pages
+1. Install the deploy helper:
+   ```bash
+   npm install --save-dev gh-pages
+   ```
+2. Build and publish:
+   ```bash
+   npm run deploy
+   ```
+3. After a successful deploy, the site will be available at:
+   `https://mahendra705.github.io/research-ai-fe`
+
+The `vite.config.js` file is already set with `base: './'`, which supports GitHub Pages.
 
 ---
 
