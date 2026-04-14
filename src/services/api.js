@@ -82,6 +82,24 @@ function extractMarkdownFromQueryResponse(body) {
   return null
 }
 
+/** Pull `sources_used` / `generated_at` from a QueryResponse-style `result` object. */
+function extractResultMeta(body) {
+  const r = body?.result
+  if (!r || typeof r !== 'object') {
+    return { sourcesUsed: [], generatedAt: null }
+  }
+  const sourcesUsed = Array.isArray(r.sources_used)
+    ? r.sources_used.map((x) => String(x).trim()).filter(Boolean)
+    : []
+  const generatedAt = typeof r.generated_at === 'string' ? r.generated_at : null
+  return { sourcesUsed, generatedAt }
+}
+
+function resultPayload(markdown, jobId, body) {
+  const { sourcesUsed, generatedAt } = extractResultMeta(body)
+  return { content: markdown, jobId, sourcesUsed, generatedAt }
+}
+
 function delay(ms, signal) {
   return new Promise((resolve, reject) => {
     let timeoutId
@@ -112,7 +130,7 @@ const MAX_JOB_WAIT_MS = 15 * 60 * 1_000
  * POST /query then poll GET /status/{job_id} until markdown is available or the job fails.
  * @param {string} query
  * @param {{ signal?: AbortSignal, onProgress?: (p: { jobId: string, status: string }) => void }} [options]
- * @returns {Promise<{ content: string, jobId: string }>}
+ * @returns {Promise<{ content: string, jobId: string, sourcesUsed: string[], generatedAt: string | null }>}
  */
 export async function runResearchQuery(query, options = {}) {
   const { signal, onProgress } = options
@@ -131,11 +149,11 @@ export async function runResearchQuery(query, options = {}) {
   }
 
   let markdown = extractMarkdownFromQueryResponse(initial)
-  if (markdown) return { content: markdown, jobId }
+  if (markdown) return resultPayload(markdown, jobId, initial)
 
   if (isTerminalSuccess(st0)) {
     markdown = await fetchMarkdownFromReport(jobId, signal)
-    if (markdown) return { content: markdown, jobId }
+    if (markdown) return resultPayload(markdown, jobId, initial)
     throw new Error('Research completed but no report content was returned.')
   }
 
@@ -158,11 +176,11 @@ export async function runResearchQuery(query, options = {}) {
     }
 
     markdown = extractMarkdownFromQueryResponse(s)
-    if (markdown) return { content: markdown, jobId }
+    if (markdown) return resultPayload(markdown, jobId, s)
 
     if (isTerminalSuccess(st)) {
       markdown = await fetchMarkdownFromReport(jobId, signal)
-      if (markdown) return { content: markdown, jobId }
+      if (markdown) return resultPayload(markdown, jobId, s)
       throw new Error('Research completed but no report content was returned.')
     }
 

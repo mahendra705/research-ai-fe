@@ -52,7 +52,7 @@ const ErrorBanner = ({ message, onRetry }) => (
 // ─── Component ────────────────────────────────────────────────────────────────
 const Home = () => {
   const [appState, setAppState] = useState(STATE.IDLE)
-  const [research, setResearch] = useState(null)   // { topic, content, jobId? }
+  const [research, setResearch] = useState(null)   // { topic, content, jobId?, sourcesUsed?, generatedAt? }
   const [errorMsg, setErrorMsg] = useState('')
   const [jobStatus, setJobStatus] = useState('')
 
@@ -93,7 +93,13 @@ const Home = () => {
         throw new Error('No content returned from the server. Please try again.')
       }
 
-      setResearch({ topic, content: data.content, jobId: data.jobId })
+      setResearch({
+        topic,
+        content: data.content,
+        jobId: data.jobId,
+        sourcesUsed: data.sourcesUsed ?? [],
+        generatedAt: data.generatedAt ?? null,
+      })
       setAppState(STATE.RESULT)
     } catch (err) {
       if (err?.name === 'AbortError') return
@@ -170,6 +176,8 @@ const Home = () => {
               content={research.content}
               topic={research.topic}
               jobId={research.jobId}
+              sourcesUsed={research.sourcesUsed}
+              generatedAt={research.generatedAt}
               onBack={handleReset}
             />
           )}
