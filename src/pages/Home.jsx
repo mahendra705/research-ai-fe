@@ -9,7 +9,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import TopicInput      from '../components/TopicInput'
 import Loader          from '../components/Loader'
 import ResearchResult  from '../components/ResearchResult'
-import { generateResearch } from '../services/api'
+import { runResearchQuery } from '../services/api'
 
 // ─── App States ───────────────────────────────────────────────────────────────
 const STATE = {
@@ -52,11 +52,13 @@ const ErrorBanner = ({ message, onRetry }) => (
 // ─── Component ────────────────────────────────────────────────────────────────
 const Home = () => {
   const [appState, setAppState] = useState(STATE.IDLE)
-  const [research, setResearch] = useState(null)   // { topic, content }
+  const [research, setResearch] = useState(null)   // { topic, content, jobId? }
   const [errorMsg, setErrorMsg] = useState('')
+  const [jobStatus, setJobStatus] = useState('')
 
   const resultRef  = useRef(null)
   const topInputRef = useRef(null)
+  const abortRef = useRef(null)
 
   // Auto-scroll to result section when it appears
   useEffect(() => {
@@ -69,34 +71,55 @@ const Home = () => {
 
   // ── Submit handler ──────────────────────────────────────────
   const handleSubmit = async (topic) => {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     setAppState(STATE.LOADING)
     setErrorMsg('')
     setResearch(null)
+    setJobStatus('Submitting…')
 
     try {
-      const data = await generateResearch(topic)
+      const data = await runResearchQuery(topic, {
+        signal: controller.signal,
+        onProgress: ({ status }) => {
+          const label = String(status || '').replace(/_/g, ' ')
+          setJobStatus(label ? label.charAt(0).toUpperCase() + label.slice(1) : '')
+        },
+      })
 
       if (!data?.content) {
         throw new Error('No content returned from the server. Please try again.')
       }
 
-      setResearch({ topic, content: data.content })
+      setResearch({ topic, content: data.content, jobId: data.jobId })
       setAppState(STATE.RESULT)
     } catch (err) {
+      if (err?.name === 'AbortError') return
       setErrorMsg(err.message || 'Failed to generate research. Please check your connection and try again.')
       setAppState(STATE.ERROR)
+    } finally {
+      setJobStatus('')
     }
   }
 
   // ── Reset to idle (back button) ─────────────────────────────
   const handleReset = () => {
+    abortRef.current?.abort()
+    abortRef.current = null
     setAppState(STATE.IDLE)
     setResearch(null)
     setErrorMsg('')
+    setJobStatus('')
     setTimeout(() => {
       topInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 50)
   }
+
+  useEffect(() => {
+    return () => abortRef.current?.abort()
+  }, [])
 
   return (
     <main className="min-h-screen pt-14">
@@ -140,12 +163,13 @@ const Home = () => {
             <div className="flex-1 h-px bg-ink-800" />
           </div>
 
-          {appState === STATE.LOADING && <Loader />}
+          {appState === STATE.LOADING && <Loader statusHint={jobStatus} />}
 
           {appState === STATE.RESULT && research && (
             <ResearchResult
               content={research.content}
               topic={research.topic}
+              jobId={research.jobId}
               onBack={handleReset}
             />
           )}

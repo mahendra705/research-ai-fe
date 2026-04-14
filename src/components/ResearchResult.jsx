@@ -7,6 +7,7 @@
 import React, { useState, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import apiClient from '../services/api'
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 const CopyIcon = () => (
@@ -60,7 +61,7 @@ const ActionButton = ({ onClick, icon, label, variant = 'ghost' }) => (
 )
 
 // ─── Component ────────────────────────────────────────────────────────────────
-const ResearchResult = ({ content, topic, onBack }) => {
+const ResearchResult = ({ content, topic, jobId, onBack }) => {
   const [copied, setCopied] = useState(false)
   const paperRef = useRef(null)
 
@@ -83,19 +84,46 @@ const ResearchResult = ({ content, topic, onBack }) => {
     }
   }
 
-  // ── Download as .md file ─────────────────────────────────────
-  const handleDownloadMd = () => {
-    const filename = topic.slice(0, 50).replace(/[^a-z0-9]/gi, '_').toLowerCase()
+  // ── Download as .md file (server export when jobId is available) ─
+  const handleDownloadMd = async () => {
+    const fallbackName = `${topic.slice(0, 50).replace(/[^a-z0-9]/gi, '_').toLowerCase()}_research.md`
+
+    if (jobId) {
+      try {
+        const res = await apiClient.get(`/report/${jobId}/download`, { responseType: 'blob' })
+        const blob = res.data instanceof Blob ? res.data : new Blob([res.data], { type: 'text/markdown;charset=utf-8' })
+        const cd = res.headers['content-disposition']
+        let filename = fallbackName
+        const match = typeof cd === 'string' && cd.match(/filename\*?=(?:UTF-8''|")?([^";]+)/i)
+        if (match) {
+          try {
+            filename = decodeURIComponent(match[1].replace(/"/g, ''))
+          } catch {
+            filename = match[1].replace(/"/g, '')
+          }
+        }
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = filename
+        a.click()
+        URL.revokeObjectURL(url)
+        return
+      } catch {
+        // Fall through to client-side export
+      }
+    }
+
     const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
-    const url  = URL.createObjectURL(blob)
-    const a    = document.createElement('a')
-    a.href     = url
-    a.download = `${filename}_research.md`
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = fallbackName
     a.click()
     URL.revokeObjectURL(url)
   }
 
-  // ── Print / Save as PDF via browser dialog ───────────────────
+  // ── Print / Save as PDF: only #research-pdf-root is visible (@media print in index.css)
   const handlePrint = () => {
     window.print()
   }
@@ -137,13 +165,14 @@ const ResearchResult = ({ content, topic, onBack }) => {
         </div>
       </div>
 
-      {/* ── Paper Card ──────────────────────────────────────── */}
+      {/* ── Paper Card (this subtree is the only content included when printing to PDF) ─ */}
       <div
+        id="research-pdf-root"
         ref={paperRef}
-        className="bg-ink-900/50 border border-ink-800/80 rounded-2xl overflow-hidden shadow-2xl shadow-black/40"
+        className="research-pdf-root bg-ink-900/50 border border-ink-800/80 rounded-2xl overflow-hidden shadow-2xl shadow-black/40"
       >
-        {/* Document Header */}
-        <div className="px-8 pt-8 pb-6 border-b border-ink-800/60">
+        {/* Document Header (screen only — PDF is markdown body from API) */}
+        <div className="print:hidden px-8 pt-8 pb-6 border-b border-ink-800/60">
           <div className="flex items-center gap-2 text-ink-600 font-mono text-[11px] uppercase tracking-widest mb-3">
             <span className="w-4 h-px bg-amber-400/40" />
             Research Paper
@@ -170,8 +199,8 @@ const ResearchResult = ({ content, topic, onBack }) => {
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="px-8 py-5 border-t border-ink-800/60 flex items-center justify-between">
+        {/* Footer (screen only — not part of saved PDF) */}
+        <div className="print:hidden px-8 py-5 border-t border-ink-800/60 flex items-center justify-between">
           <span className="text-ink-700 text-xs font-mono">
             AI-generated content · Verify with primary sources
           </span>

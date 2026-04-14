@@ -36,7 +36,7 @@ const SKELETON_LINES = [
 ]
 
 // ─── Component ────────────────────────────────────────────────────────────────
-const Loader = () => {
+const Loader = ({ statusHint }) => {
   const [msgIndex, setMsgIndex] = useState(0)
 
   // Cycle through loading messages every 3.5 seconds
@@ -66,7 +66,13 @@ const Loader = () => {
             {MESSAGES[msgIndex]}
           </p>
           <p className="text-ink-600 text-xs font-mono mt-0.5">
-            This may take up to a minute
+            {statusHint ? (
+              <>
+                <span className="text-amber-400/70">Server status:</span> {statusHint}
+                <span className="text-ink-700"> · </span>
+              </>
+            ) : null}
+            This may take several minutes for deep research
           </p>
         </div>
 
